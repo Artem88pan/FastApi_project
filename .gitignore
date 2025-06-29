@@ -1,1 +1,79 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+*.whl
+
+# Virtual environments
 .venv/
+venv/
+ENV/
+env/
+.venv/*
+
+# Poetry / pipenv
+poetry.lock
+Pipfile.lock
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+.cache
+.pytest_cache/
+
+# MyPy
+.mypy_cache/
+
+# Celery
+celerybeat-schedule
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# MailHog (if storing its data locally)
+mailhog_data/
+
+# Docker
+docker-compose.override.yml
