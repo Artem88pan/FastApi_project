@@ -15,8 +15,13 @@ DATABASE_URL = (
 SECRET_KEY = os.getenv('SECRET_KEY', 'super-secret-key')
 ALGORITHM = os.getenv('ALGORITHM', 'HS256')
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 60))
+PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", 15)
+)
+BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+
 
 SMTP_HOST = os.getenv('SMTP_HOST', 'localhost')
 SMTP_PORT = int(os.getenv('SMTP_PORT', 1025))
