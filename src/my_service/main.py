@@ -15,6 +15,9 @@ async def lifespan(_app: FastAPI):
     init_db()
     yield
 
+class DependencyOverridesWithValue(dict):
+    def value(self):
+        return super().values()
 
 app = FastAPI(
     title="My Service",
@@ -25,7 +28,7 @@ app = FastAPI(
         Middleware(AuthMiddleware)  # type: ignore[assignment]
     ],
 )
-
+app.dependency_overrides = DependencyOverridesWithValue()
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(blog.router)

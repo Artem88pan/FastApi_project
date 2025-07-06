@@ -1,21 +1,27 @@
+# src/my_service/models/blog.py
+
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from sqlalchemy import DDL, Column, ColumnElement, DateTime, Index, Text, event
+from sqlalchemy import DDL, Column, ColumnElement, DateTime, Index, Text
 from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.ext.compiler import compiles
 from sqlmodel import Field, Relationship, SQLModel
 
 
+@compiles(TSVECTOR, "sqlite")
+def compile_tsvector_sqlite(element, compiler, **kw):
+    # вместо настоящего TSVECTOR для SQLite будет просто TEXT
+    return "TEXT"
+@compiles(DDL, "sqlite")
+def _ignore_ddl_on_sqlite(element, compiler, **kw):
+    return ""
 class Category(SQLModel, table=True):
     __tablename__ = "category"
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(sa_column=Column("name", Text, nullable=False, unique=True))
     articles: List["Article"] = Relationship(back_populates="category")
-    model_config = {
-        "arbitrary_types_allowed": True,
-        "from_attributes": True
-    }
-
+    model_config = {"arbitrary_types_allowed": True, "from_attributes": True}
 
 class Article(SQLModel, table=True):
     __tablename__ = "article"
@@ -26,33 +32,25 @@ class Article(SQLModel, table=True):
     image_url: Optional[str] = Field(default=None, sa_column=Column("image_url", Text))
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_column=Column(
-            "created_at",
-            DateTime(timezone=True),
-            nullable=False
-        ),
+        sa_column=Column("created_at", DateTime(timezone=True), nullable=False),
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_column=Column(
-            "updated_at",
-            DateTime(timezone=True),
-            nullable=False
-        ),
+        sa_column=Column("updated_at", DateTime(timezone=True), nullable=False),
     )
-
     search_vector: Optional[ColumnElement] = Field(
         default=None,
         sa_column=Column("search_vector", TSVECTOR),
     )
     category: Optional[Category] = Relationship(back_populates="articles")
-    model_config = {
-        "arbitrary_types_allowed": True,
-        "from_attributes": True
-    }
+    model_config = {"arbitrary_types_allowed": True, "from_attributes": True}
     __table_args__ = (
         Index("ix_article_search_vector", "search_vector", postgresql_using="gin"),
     )
+
+# Определение DDL-триггера, но без event.listen
+
+
 
 SEARCH_VECTOR_TRIGGER = DDL(
     """
@@ -65,20 +63,13 @@ SEARCH_VECTOR_TRIGGER = DDL(
     $$ LANGUAGE plpgsql;
 
     CREATE TRIGGER trg_article_search_vector
-      BEFORE INSERT OR UPDATE
-      ON article
+      BEFORE INSERT OR UPDATE ON article
       FOR EACH ROW EXECUTE PROCEDURE article_search_vector_update();
     """
 )
 
-
-event.listen(Article.__table__, 'after_create', SEARCH_VECTOR_TRIGGER)
-
-
 class DeletedArticle(SQLModel, table=True):
-
     __tablename__ = "deleted_article"
-
     id: Optional[int] = Field(default=None, primary_key=True)
     original_id: int = Field(nullable=False)
     title: str = Field(sa_column=Column("title", Text, nullable=False))
@@ -87,9 +78,5 @@ class DeletedArticle(SQLModel, table=True):
     image_url: Optional[str] = Field(default=None, sa_column=Column("image_url", Text))
     deleted_at: Optional[datetime] = Field(
         default=None,
-        sa_column=Column(
-            "deleted_at",
-            DateTime(timezone=True),
-            nullable=True
-        )
+        sa_column=Column("deleted_at", DateTime(timezone=True), nullable=True)
     )

@@ -19,7 +19,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 class PasswordResetRequest(BaseModel):
-    email: EmailStr
+    email: str
 
 class PasswordReset(BaseModel):
     token: str
