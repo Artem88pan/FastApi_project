@@ -18,15 +18,22 @@ class MinioStorage:
     def __init__(self):
         if not USE_MINIO:
             raise RuntimeError("MinIO storage is disabled")
+
+
         self.client = Minio(
             endpoint=MINIO_ENDPOINT,
             access_key=MINIO_ACCESS_KEY,
             secret_key=MINIO_SECRET_KEY,
-            secure=False,  # если у вас http, а не https
+            secure=False,
         )
-        # Создаём бакет, если нет
-        if not self.client.bucket_exists(MINIO_BUCKET):
-            self.client.make_bucket(MINIO_BUCKET)
+
+
+        try:
+            if not self.client.bucket_exists(MINIO_BUCKET):
+                self.client.make_bucket(MINIO_BUCKET)
+        except Exception:
+            pass
+
 
     def upload_object(
         self,

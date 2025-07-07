@@ -71,7 +71,7 @@ def list_categories(session: Session = session_dep):
 
 
 @router.post(
-    "/categories",
+    "/categories/",
     response_model=CategoryRead,
     status_code=status.HTTP_201_CREATED,
     summary="Создать новую категорию",
@@ -116,9 +116,10 @@ def list_articles(
         tsq = func.to_tsquery("russian", func.plainto_tsquery(search))
         stmt = stmt.where(Article.search_vector.op("@@")(tsq))
 
-    total = session.exec(
-        stmt.with_only_columns(func.count()).order_by(None)
-    ).one()
+    count_stmt = (
+        stmt.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
+    )
+    total = session.exec(count_stmt).first() or 0
 
     # пагинация
     offset = (page_number - 1) * page_size
@@ -149,7 +150,11 @@ async def create_article(
     storage: MinioStorage = storage_dep,
     session: Session = session_dep,
 ):
-    # читаем файл целиком
+    if not session.get(Category, category_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Категория не найдена"
+        )
     data = await image.read()
     # генерим имя в бакете
     ext = image.filename.rsplit(".", 1)[-1]
@@ -194,10 +199,14 @@ async def update_article(
     storage: MinioStorage = storage_dep,
     session: Session = session_dep,
 ):
+
     article = session.get(Article, article_id)
     if not article:
         raise HTTPException(status_code=404, detail="Статья не найдена")
-
+    if category_id is not None:
+        if not Session.get(Category, category_id):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="категория не найдена")
+        article.category_id = category_id
     # обновляем картинку, если прислали
     if image:
         data = await image.read()
