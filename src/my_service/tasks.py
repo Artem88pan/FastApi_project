@@ -5,10 +5,10 @@ from celery import shared_task
 
 from my_service.core.config import (
     BASE_URL,
+    EMAIL_FROM,
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES,
     SMTP_HOST,
     SMTP_PORT,
-    SMTP_USER,
 )
 
 
@@ -28,7 +28,7 @@ def send_password_reset_email(email: str, token: str):
     link = f"{BASE_URL}/reset-password?token={token}"
     msg = EmailMessage()
     msg["Subject"] = "Сброс пароля"
-    msg["From"] = SMTP_USER
+    msg["From"] = EMAIL_FROM
     msg["To"] = email
     msg.set_content(
         f"Здравствуйте!\n\n"
@@ -37,4 +37,4 @@ def send_password_reset_email(email: str, token: str):
         f"Ссылка действительна {PASSWORD_RESET_TOKEN_EXPIRE_MINUTES} мин."
     )
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-        smtp.send_message(msg)
+        smtp.send_message(msg, from_addr=EMAIL_FROM, to_addrs=[email])

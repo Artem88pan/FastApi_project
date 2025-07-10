@@ -28,7 +28,7 @@ SMTP_HOST = os.getenv('SMTP_HOST', 'localhost')
 SMTP_PORT = int(os.getenv('SMTP_PORT', 1025))
 SMTP_USER = os.getenv('SMTP_USER', '')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')
-
+EMAIL_FROM = os.getenv("EMAIL_FROM")
 USE_MINIO = True
 
 MINIO_ENDPOINT     = os.getenv("MINIO_ENDPOINT", "localhost:9000")
