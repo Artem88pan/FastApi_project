@@ -1,0 +1,50 @@
+
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware import Middleware
+
+from my_service.api import auth, blog, users
+from my_service.core.middleware import AuthMiddleware
+from my_service.db.session import init_db
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # код startup
+    init_db()
+    yield
+
+class DependencyOverridesWithValue(dict):
+    def value(self):
+        return super().values()
+
+app = FastAPI(
+    title="My Service",
+    description="Блог маркетплейса",
+    version="0.1.0",
+    lifespan=lifespan,
+    middleware=[
+        Middleware(AuthMiddleware)  # type: ignore[assignment]
+    ],
+)
+app.dependency_overrides = DependencyOverridesWithValue()
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(blog.router)
+
+
+origins = [
+    "http://localhost:8000",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = origins,
+    allow_credentials = True,
+    allow_methods = ["*"],
+    allow_headers = ["*"]
+
+)

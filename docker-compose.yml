@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:14
+    restart: always
+    env_file:
+      - .env.docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog_user"]
+      interval: 5s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    restart: always
+    env_file:
+      - .env.docker
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: always
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fastapi_project-web
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      mailhog:
+        condition: service_started
+    command: uvicorn my_service.main:app --host 0.0.0.0 --port 8000
+    env_file:
+      - .env.docker
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app
+
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fastapi_project-celery_worker
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A my_service.celery_app:celery_app worker --loglevel=info
+    env_file:
+      - .env.docker
+    volumes:
+      - ./src:/app
+
+volumes:
+  db_data:
+  minio_data:
