@@ -77,3 +77,8 @@ mailhog_data/
 
 # Docker
 docker-compose.override.yml
+
+# ——————————————
+# Секреты и конфиги окружения:
+.env
+.env.docker
